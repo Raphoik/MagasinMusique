@@ -1,6 +1,6 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.IOException;
-
 
 public class Utilities {
 
@@ -61,4 +61,5 @@ public class Utilities {
     public static void cls() throws IOException, InterruptedException {
             Runtime.getRuntime().exec("cmd /c cls");
     }
+
 }

@@ -1,8 +1,9 @@
+import java.util.ArrayList;
 
 /**
- * Write a description of class Gerant here.
+ * Gerant
  * 
- * @author (your name) 
+ * @author Gabriel Cardinal
  * @version (a version number or a date)
  */
 public class Gerant extends Employe
@@ -10,24 +11,9 @@ public class Gerant extends Employe
     // instance variables - replace the example below with your own
     private int x;
 
-    /**
-     * Constructor for objects of class Gerant
-     */
-    public Gerant()
-    {
-        // initialise instance variables
-        x = 0;
-    }
 
-    /**
-     * An example of a method - replace this comment with your own
-     * 
-     * @param  y   a sample parameter for a method
-     * @return     the sum of x and y 
-     */
-    public int sampleMethod(int y)
+    public Gerant(ArrayList<String> gerantInfo)
     {
-        // put your code here
-        return x + y;
+        super(gerantInfo);
     }
 }

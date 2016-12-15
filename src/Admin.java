@@ -1,33 +1,15 @@
+import java.util.ArrayList;
 
 /**
  * Write a description of class Admin here.
  * 
- * @author (your name) 
- * @version (a version number or a date)
+ * @author Gabriel Cardinal
+ * @since 20 Decembre 2016
  */
 public final class Admin extends Gerant
 {
-    // instance variables - replace the example below with your own
-    private int x;
-
-    /**
-     * Constructor for objects of class Admin
-     */
-    public Admin()
+    public Admin(ArrayList<String> adminInfo)
     {
-        // initialise instance variables
-        x = 0;
-    }
-
-    /**
-     * An example of a method - replace this comment with your own
-     * 
-     * @param  y   a sample parameter for a method
-     * @return     the sum of x and y 
-     */
-    public int sampleMethod(int y)
-    {
-        // put your code here
-        return x + y;
+        super(adminInfo);
     }
 }

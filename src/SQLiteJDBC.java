@@ -4,12 +4,24 @@
 import com.sun.xml.internal.ws.api.addressing.WSEndpointReference;
 
 import javax.print.DocFlavor;
+
+/**
+ * <h1>SQLiteJDBC</h1>
+ * La classe <b>SQLiteJDBC</b> est la classe responsable de gérer toutes les relations entre la base de données et le programme.
+ *
+ * @author Raphael Valois
+ * @since 20 décembre 2016
+ */
+
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collections;
+
 
 public class SQLiteJDBC {
 
-    static String url = "jdbc:sqlite:magasin_musique.db";
-    static Connection conn = connect();
+    static private String url = "jdbc:sqlite:magasin_musique.db";
+    static private Connection conn = connect();
 
     private static Connection connect() {
         Connection conn = null;
@@ -32,6 +44,7 @@ public class SQLiteJDBC {
                     "(ID INTEGER PRIMARY KEY     AUTOINCREMENT     NOT NULL," +
                     " PRENOM         TEXT    NOT NULL, " +
                     " NOM            TEXT    NOT NULL, " +
+                    " UTILISATEUR    TEXT    NOT NULL, " +
                     " MDP            TEXT    NOT NULL, " +
                     " EMAIL          TEXT    NOT NULL, " +
                     " TEL            INT     NOT NULL, " +
@@ -49,59 +62,14 @@ public class SQLiteJDBC {
                     " PRIX_COS       REAL    NOT NULL, " +
                     " QUANTITE       INT     NOT NULL)";
             stmt.executeUpdate(sql);
-            sql =   "INSERT INTO Personnes (PRENOM,NOM,MDP,EMAIL,TEL,ADRESSE,TYPE) " +
-                    "VALUES ('System','Root','mansys','admin@admin.com','1234567890','Drummondville','Admin');";
+            sql =   "INSERT INTO Personnes (PRENOM,NOM,UTILISATEUR,MDP,EMAIL,TEL,ADRESSE,TYPE,TOTAL_ACHAT,TOTAL_VENTE) " +
+                    "VALUES ('System','Root','Admin','mansys','admin@admin.com','1234567890','Drummondville','Admin',NULL,NULL);";
             stmt.executeUpdate(sql);
             stmt.close();
         } catch ( Exception e ) {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
         }
-    }
-
-    public static String[][] get_person(String field,String value){
-        int max = 50;
-        PreparedStatement pstmt = null;
-        String[][] persons = new String[max][9];
-        try{
-            String sql = "SELECT * FROM Personnes " +
-                         "WHERE " + field + " = ?";
-            pstmt = conn.prepareStatement(sql);
-            if(field == "TEL" || field == "ID"){
-                pstmt.setInt(1,Integer.parseInt(value));
-            }else {
-                pstmt.setString(1,value);
-            }
-            ResultSet rs = pstmt.executeQuery();
-            int i = 0;
-            while (rs.next()){
-                if (i <= max) {
-                    persons[i][0] = String.valueOf(rs.getInt("ID"));
-                    persons[i][1] = rs.getString("PRENOM");
-                    persons[i][2] = rs.getString("NOM");
-                    persons[i][3] = rs.getString("MDP");
-                    persons[i][4] = rs.getString("EMAIL");
-                    persons[i][5] = String.valueOf(rs.getInt("TEL"));
-                    persons[i][6] = rs.getString("ADRESSE");
-                    persons[i][7] = rs.getString("TYPE");
-                    if (persons[i][7] == "Client" || persons[i][7] == "Employe") {
-                        persons[i][8] = String.valueOf(rs.getInt("TOTAL_ACHAT"));
-                        if (persons[i][7] == "Employe") {
-                            persons[i][9] = String.valueOf(rs.getInt("TOTAL_VENTE"));
-                        }
-                    }
-                    i++;
-                }
-            }
-            pstmt.close();
-        } catch ( Exception e ) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            System.exit(0);
-        }return persons;
-    }
-
-    public static void create_user(){
-
     }
 
     public static void close(){
@@ -119,9 +87,9 @@ public class SQLiteJDBC {
         PreparedStatement pstmt = null;
         try{
             String sql = "SELECT * FROM Personnes " +
-                    "WHERE ID = ? AND MDP = ?";
+                    "WHERE UTILISATEUR = ? AND MDP = ?";
             pstmt = conn.prepareStatement(sql);
-            pstmt.setInt(1,Integer.parseInt(credentials[0]));
+            pstmt.setString(1,credentials[0]);
             pstmt.setString(2,credentials[1]);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()){
@@ -133,4 +101,314 @@ public class SQLiteJDBC {
             System.exit(0);
         }return successful;
     }
-}
+
+    public static boolean valid_username(String username) {
+        boolean valid = true;
+        PreparedStatement pstmt = null;
+        try{
+            String sql = "SELECT * FROM Personnes " +
+                    "WHERE UTILISATEUR = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1,username);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()){
+                valid = false;
+            }
+            pstmt.close();
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }return valid;
+    }
+
+    public static void add_user(Personne personne,String utilisateur,String mdp){
+        PreparedStatement pstmt = null;
+        ArrayList<String> person_info = personne.export_person_info();
+        try{
+            String sql =    "INSERT INTO Personnes (PRENOM,NOM,UTILISATEUR,MDP,EMAIL,TEL,ADRESSE,TYPE,TOTAL_ACHAT,TOTAL_VENTE) " +
+                            "VALUES (?,?,?,?,?,?,?,?,?,?);";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1,person_info.get(1));
+            pstmt.setString(2,person_info.get(2));
+            pstmt.setString(3,utilisateur);
+            pstmt.setString(4,mdp);
+            pstmt.setString(5,person_info.get(3));
+            pstmt.setString(6,person_info.get(4));
+            pstmt.setString(7,person_info.get(5));
+            pstmt.setString(8,person_info.get(6));
+            if (person_info.get(6).equals("Client") || person_info.get(6).equals("Employe")) {
+                pstmt.setString(9,person_info.get(7));
+                if (person_info.get(6).equals("Employe")) {
+                    pstmt.setString(10,person_info.get(8));
+                }else{
+                    pstmt.setNull(10, java.sql.Types.INTEGER);
+                }
+            }else{
+                pstmt.setNull(9, java.sql.Types.INTEGER);
+                pstmt.setNull(10, java.sql.Types.INTEGER);
+            }
+            pstmt.executeUpdate();
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
+    }
+
+    public static void add_product(String type, String marque, String desc, int prix, int prix_cos, int qte){
+        PreparedStatement pstmt = null;
+        try{
+            String sql =    "INSERT INTO Produits (TYPE,MARQUE,DESC,PRIX,PRIX_COS,QUANTITE) " +
+                            "VALUES (?,?,?,?,?,?);";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1,type);
+            pstmt.setString(2,marque);
+            pstmt.setString(3,desc);
+            pstmt.setInt(4,prix);
+            pstmt.setInt(5,prix_cos);
+            pstmt.setInt(6,qte);
+            pstmt.executeUpdate();
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
+    }
+
+    public static ArrayList<Personne> get_person(String[] field,String[] value){
+        PreparedStatement pstmt = null;
+        ArrayList<Personne> personnes = new ArrayList<Personne>();
+        ArrayList<String> personne_info = new ArrayList<String>();
+        try{
+            int i = 0;
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("SELECT * FROM Personnes WHERE ("+field[i]+" = ?");
+            for (i = 1;i < field.length;i++) {
+                stringBuilder.append(" AND "+field[i]+" = ?");
+            }
+            stringBuilder.append(")");
+            String sql = stringBuilder.toString();
+            pstmt = conn.prepareStatement(sql);
+            for (i = 0;i < field.length;i++) {
+                pstmt.setString(i+1, value[i]);
+            }
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()){
+                personne_info = new ArrayList<String>();
+                personne_info.add(rs.getString("ID"));
+                personne_info.add(rs.getString("PRENOM"));
+                personne_info.add(rs.getString("NOM"));
+                personne_info.add(rs.getString("MDP"));
+                personne_info.add(rs.getString("EMAIL"));
+                personne_info.add(rs.getString("TEL"));
+                personne_info.add(rs.getString("ADRESSE"));
+                personne_info.add(rs.getString("TYPE"));
+                if (personne_info.get(7).equals("Client") || personne_info.get(7).equals("Employe")) {
+                    personne_info.add(rs.getString("TOTAL_ACHAT"));
+                    if (personne_info.get(7).equals("Employe")) {
+                        personne_info.add(rs.getString("TOTAL_VENTE"));
+                    }
+                }
+                Personne singleperson = PersonFactory.makePerson(personne_info);
+                personnes.add(singleperson);
+            }
+            pstmt.close();
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }return personnes;
+    }
+
+    public static ArrayList<Personne> get_person(String field,String value){
+        PreparedStatement pstmt = null;
+        ArrayList<Personne> personnes = new ArrayList<Personne>();
+        ArrayList<String> personne_info = new ArrayList<String>();
+        try{
+            int i = 0;
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("SELECT * FROM Personnes WHERE ("+field+" = ?)");
+            String sql = stringBuilder.toString();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, value);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()){
+                personne_info = new ArrayList<String>();
+                personne_info.add(rs.getString("ID"));
+                personne_info.add(rs.getString("PRENOM"));
+                personne_info.add(rs.getString("NOM"));
+                personne_info.add(rs.getString("MDP"));
+                personne_info.add(rs.getString("EMAIL"));
+                personne_info.add(rs.getString("TEL"));
+                personne_info.add(rs.getString("ADRESSE"));
+                personne_info.add(rs.getString("TYPE"));
+                if (personne_info.get(7).equals("Client") || personne_info.get(7).equals("Employe")) {
+                    personne_info.add(rs.getString("TOTAL_ACHAT"));
+                    if (personne_info.get(7).equals("Employe")) {
+                        personne_info.add(rs.getString("TOTAL_VENTE"));
+                    }
+                }
+                Personne singleperson = PersonFactory.makePerson(personne_info);
+                personnes.add(singleperson);
+            }
+            pstmt.close();
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }return personnes;
+    }
+
+    public static ArrayList<ArrayList<String>> get_product(String[] field,String[] value){
+        PreparedStatement pstmt = null;
+        ArrayList<ArrayList<String>> products = new ArrayList<ArrayList<String>>();
+        ArrayList<String> product_info = new ArrayList<String>();
+        try{
+            int i = 0;
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("SELECT * FROM Produits WHERE ("+field[i]+" = ?");
+            for (i = 1;i < field.length;i++) {
+                stringBuilder.append(" AND "+field[i]+" = ?");
+            }
+            stringBuilder.append(")");
+            String sql = stringBuilder.toString();
+            pstmt = conn.prepareStatement(sql);
+            for (i = 0;i < field.length;i++) {
+                pstmt.setString(i+1, value[i]);
+            }
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()){
+                product_info = new ArrayList<String>();
+                product_info.add(rs.getString("ID"));
+                product_info.add(rs.getString("TYPE"));
+                product_info.add(rs.getString("MARQUE"));
+                product_info.add(rs.getString("DESC"));
+                product_info.add(rs.getString("PRIX"));
+                product_info.add(rs.getString("PRIX_COS"));
+                product_info.add(rs.getString("ADRESSE"));
+                product_info.add(rs.getString("QUANTITE"));
+                Produit single_product = ProductFactory.makeProduct();
+                products.add(single_product);
+            }
+            pstmt.close();
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }return products;
+    }
+
+    public static ArrayList<ArrayList<String>> get_product(String field,String value){
+        PreparedStatement pstmt = null;
+        ArrayList<ArrayList<String>> products = new ArrayList<ArrayList<String>>();
+        ArrayList<String> product_info = new ArrayList<String>();
+        try{
+            int i = 0;
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("SELECT * FROM Produits WHERE ("+field+" = ?)");
+            String sql = stringBuilder.toString();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(i+1, value);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()){
+                product_info = new ArrayList<String>();
+                product_info.add(rs.getString("ID"));
+                product_info.add(rs.getString("TYPE"));
+                product_info.add(rs.getString("MARQUE"));
+                product_info.add(rs.getString("DESC"));
+                product_info.add(rs.getString("PRIX"));
+                product_info.add(rs.getString("PRIX_COS"));
+                product_info.add(rs.getString("ADRESSE"));
+                product_info.add(rs.getString("QUANTITE"));
+                Produit single_product = ProductFactory.makeProduct();
+                products.add(single_product);
+            }
+            pstmt.close();
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }return products;
+    }
+
+    public static void update_user(String id,String[] field,String[] value){
+        PreparedStatement pstmt = null;
+        try{
+            int i = 0;
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("UPDATE Personnes SET "+field[i]+" = ?");
+            for (i = 1;i < field.length;i++) {
+                stringBuilder.append(", "+field[i]+" = ?");
+            }
+            stringBuilder.append(" WHERE ID = ?");
+            String sql = stringBuilder.toString();
+            pstmt = conn.prepareStatement(sql);
+            for (i = 0;i < field.length;i++) {
+                pstmt.setString(i+1, value[i]);
+            }
+            pstmt.setString(i+1,id);
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
+    }
+
+    public static void update_user(String id,String field,String value){
+        PreparedStatement pstmt = null;
+        try{
+            int i = 0;
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("UPDATE Personnes SET "+field+" = ?");
+            stringBuilder.append(" WHERE ID = ?");
+            String sql = stringBuilder.toString();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(i+1, value);
+            pstmt.setString(i+1,id);
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
+    }
+
+    public static void update_product(String id,String[] field,String[] value){
+        PreparedStatement pstmt = null;
+        try{
+            int i = 0;
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("UPDATE Produits SET "+field[i]+" = ?");
+            for (i = 1;i < field.length;i++) {
+                stringBuilder.append(", "+field[i]+" = ?");
+            }
+            stringBuilder.append(" WHERE ID = ?");
+            String sql = stringBuilder.toString();
+            pstmt = conn.prepareStatement(sql);
+            for (i = 0;i < field.length;i++) {
+                pstmt.setString(i+1, value[i]);
+            }
+            pstmt.setString(i+1,id);
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
+    }
+
+    public static void update_product(String id,String field,String value){
+        PreparedStatement pstmt = null;
+        try{
+            int i = 0;
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("UPDATE Produits SET "+field+" = ?");
+            stringBuilder.append(" WHERE ID = ?");
+            String sql = stringBuilder.toString();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(i+1, value);
+            pstmt.setString(i+1,id);
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
+    }
+
+    }
