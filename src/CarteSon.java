@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 
 /**
  * Write a description of class CarteSon here.
@@ -5,29 +6,9 @@
  * @author (your name) 
  * @version (a version number or a date)
  */
-public class CarteSon extends Electronique
+public class CarteSon extends Produit
 {
-    // instance variables - replace the example below with your own
-    private int x;
-
-    /**
-     * Constructor for objects of class CarteSon
-     */
-    public CarteSon()
-    {
-        // initialise instance variables
-        x = 0;
-    }
-
-    /**
-     * An example of a method - replace this comment with your own
-     * 
-     * @param  y   a sample parameter for a method
-     * @return     the sum of x and y 
-     */
-    public int sampleMethod(int y)
-    {
-        // put your code here
-        return x + y;
+    public CarteSon(ArrayList<String> product_info) {
+        super(product_info);
     }
 }

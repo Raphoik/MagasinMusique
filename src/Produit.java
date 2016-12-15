@@ -10,14 +10,14 @@ public abstract class Produit
     protected String prix_cos;
     protected String qte;
 
-    public Produit(ArrayList<String> personInfo) {
-        this.id = personInfo.get(0);
-        this.type = personInfo.get(1);
-        this.marque = personInfo.get(2);
-        this.desc = personInfo.get(3);
-        this.prix = personInfo.get(4);
-        this.prix_cos = personInfo.get(5);
-        this.qte = personInfo.get(6);
+    public Produit(ArrayList<String> product_info) {
+        this.id = product_info.get(0);
+        this.type = product_info.get(1);
+        this.marque = product_info.get(2);
+        this.desc = product_info.get(3);
+        this.prix = product_info.get(4);
+        this.prix_cos = product_info.get(5);
+        this.qte = product_info.get(6);
     }
 
     public String getId() {
@@ -75,8 +75,6 @@ public abstract class Produit
     public void setQte(String qte) {
         this.qte = qte;
     }
-
-
 
 
 

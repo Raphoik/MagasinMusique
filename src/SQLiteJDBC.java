@@ -154,18 +154,19 @@ public class SQLiteJDBC {
         }
     }
 
-    public static void add_product(String type, String marque, String desc, int prix, int prix_cos, int qte){
+    public static void add_product(Produit produit){
         PreparedStatement pstmt = null;
+        ArrayList<String> product_info = produit.export_product_info();
         try{
             String sql =    "INSERT INTO Produits (TYPE,MARQUE,DESC,PRIX,PRIX_COS,QUANTITE) " +
                             "VALUES (?,?,?,?,?,?);";
             pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1,type);
-            pstmt.setString(2,marque);
-            pstmt.setString(3,desc);
-            pstmt.setInt(4,prix);
-            pstmt.setInt(5,prix_cos);
-            pstmt.setInt(6,qte);
+            pstmt.setString(1,product_info.get(0));
+            pstmt.setString(2,product_info.get(1));
+            pstmt.setString(3,product_info.get(2));
+            pstmt.setString(4,product_info.get(3));
+            pstmt.setString(5,product_info.get(4));
+            pstmt.setString(6,product_info.get(5));
             pstmt.executeUpdate();
         } catch ( Exception e ) {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
@@ -255,9 +256,9 @@ public class SQLiteJDBC {
         }return personnes;
     }
 
-    public static ArrayList<ArrayList<String>> get_product(String[] field,String[] value){
+    public static ArrayList<Produit> get_product(String[] field,String[] value){
         PreparedStatement pstmt = null;
-        ArrayList<ArrayList<String>> products = new ArrayList<ArrayList<String>>();
+        ArrayList<Produit> products = new ArrayList<Produit>();
         ArrayList<String> product_info = new ArrayList<String>();
         try{
             int i = 0;
@@ -283,7 +284,7 @@ public class SQLiteJDBC {
                 product_info.add(rs.getString("PRIX_COS"));
                 product_info.add(rs.getString("ADRESSE"));
                 product_info.add(rs.getString("QUANTITE"));
-                Produit single_product = ProductFactory.makeProduct();
+                Produit single_product = ProductFactory.makeProduct(product_info);
                 products.add(single_product);
             }
             pstmt.close();
@@ -293,9 +294,9 @@ public class SQLiteJDBC {
         }return products;
     }
 
-    public static ArrayList<ArrayList<String>> get_product(String field,String value){
+    public static ArrayList<Produit> get_product(String field,String value){
         PreparedStatement pstmt = null;
-        ArrayList<ArrayList<String>> products = new ArrayList<ArrayList<String>>();
+        ArrayList<Produit> products = new ArrayList<Produit>();
         ArrayList<String> product_info = new ArrayList<String>();
         try{
             int i = 0;
@@ -315,7 +316,7 @@ public class SQLiteJDBC {
                 product_info.add(rs.getString("PRIX_COS"));
                 product_info.add(rs.getString("ADRESSE"));
                 product_info.add(rs.getString("QUANTITE"));
-                Produit single_product = ProductFactory.makeProduct();
+                Produit single_product = ProductFactory.makeProduct(product_info);
                 products.add(single_product);
             }
             pstmt.close();
